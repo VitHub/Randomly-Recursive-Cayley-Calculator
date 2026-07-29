@@ -85,17 +85,17 @@ export default function MathExplainer({
                 Term-by-Term Products Expansion:
               </div>
               <div className="space-y-1.5 pl-2 border-l border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 max-h-[160px] overflow-y-auto scrollbar-thin">
-                {leftVal.terms.flatMap((t1) =>
-                  rightVal.terms.map((t2) => {
+                {leftVal.terms.flatMap((t1, idx1) =>
+                  rightVal.terms.map((t2, idx2) => {
                     const c1 = typeof t1.coeff === "number" ? t1.coeff : t1.coeff.getScalarValue();
                     const c2 = typeof t2.coeff === "number" ? t2.coeff : t2.coeff.getScalarValue();
-                    const idx1 = t1.basis.type === "index" ? t1.basis.index : 0;
-                    const idx2 = t2.basis.type === "index" ? t2.basis.index : 0;
-                    const cdRes = cayleyMulBasisIndices(idx1, idx2);
+                    const bIdx1 = t1.basis.type === "index" ? t1.basis.index : 0;
+                    const bIdx2 = t2.basis.type === "index" ? t2.basis.index : 0;
+                    const cdRes = cayleyMulBasisIndices(bIdx1, bIdx2);
                     const prodCoeff = c1 * c2 * cdRes.sign;
 
                     return (
-                      <div key={`${idx1}-${idx2}`} className="flex justify-between items-center py-0.5">
+                      <div key={`prod-${idx1}-${idx2}`} className="flex justify-between items-center py-0.5">
                         <span>({c1}{basisToString(t1.basis)}) * ({c2}{basisToString(t2.basis)})</span>
                         <span className="font-bold text-slate-700 dark:text-slate-300">
                           = {prodCoeff > 0 ? "+" : ""}{parseFloat(prodCoeff.toFixed(3))}e{cdRes.index}

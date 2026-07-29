@@ -139,14 +139,14 @@ export default function CayleyNodeEditor({
             No terms set. Click a "+e[k]" button above or type an expression in the input box!
           </div>
         ) : (
-          val.terms.map((term) => {
+          val.terms.map((term, idx) => {
             const bIdx = term.basis.type === "index" ? term.basis.index : 0;
             const bStr = basisToString(term.basis);
             const cVal = typeof term.coeff === "number" ? term.coeff : term.coeff.getScalarValue();
 
             return (
               <div
-                key={bStr}
+                key={`${bStr}-${idx}`}
                 className="p-3 bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/70 rounded-xl flex items-center justify-between gap-3 shadow-2xs hover:border-teal-400 transition"
               >
                 <div className="flex items-center gap-2">

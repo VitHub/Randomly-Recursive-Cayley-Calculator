@@ -180,9 +180,10 @@ export default function CayleyVisualizer({
               <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4 overflow-x-auto text-center scrollbar-thin">
                 <div className="font-mono text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap inline-flex items-center gap-1">
                   {val.terms.map((term, idx) => {
-                    const key = basisToKey(term.basis);
-                    const isSelected = selectedTermKey === key;
-                    const isHovered = hoveredTermKey === key;
+                    const key = `${basisToKey(term.basis)}-${idx}`;
+                    const termKey = basisToKey(term.basis);
+                    const isSelected = selectedTermKey === termKey;
+                    const isHovered = hoveredTermKey === termKey;
                     const cVal = typeof term.coeff === "number" ? term.coeff : term.coeff.getScalarValue();
                     const bStr = basisToString(term.basis);
                     const absC = Math.abs(cVal);
@@ -192,7 +193,7 @@ export default function CayleyVisualizer({
                       <span
                         key={key}
                         onClick={() => onTermClick && onTermClick(term)}
-                        onMouseEnter={() => setHoveredTermKey(key)}
+                        onMouseEnter={() => setHoveredTermKey(termKey)}
                         onMouseLeave={() => setHoveredTermKey(null)}
                         className={`inline-flex items-center px-2 py-1 rounded-lg border transition-all duration-200 cursor-pointer select-none ${
                           isSelected || isHovered
@@ -230,8 +231,8 @@ export default function CayleyVisualizer({
                         {group.spaceName}
                       </span>
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {group.terms.map((term) => {
-                          const key = basisToKey(term.basis);
+                        {group.terms.map((term, tIdx) => {
+                          const key = `${basisToKey(term.basis)}-${tIdx}`;
                           const bStr = basisToString(term.basis);
                           const cVal = typeof term.coeff === "number" ? term.coeff : term.coeff.getScalarValue();
 
@@ -265,14 +266,14 @@ export default function CayleyVisualizer({
 
             {/* Visual Bar chart of non-zero basis coefficients */}
             <div className="bg-slate-50 dark:bg-slate-950/50 p-4 border border-slate-100 dark:border-slate-800 rounded-xl space-y-3">
-              {val.terms.map((term) => {
+              {val.terms.map((term, idx) => {
                 const bStr = basisToString(term.basis);
                 const cVal = typeof term.coeff === "number" ? term.coeff : term.coeff.getScalarValue();
                 const absCoeff = Math.abs(cVal);
                 const pct = Math.min(100, Math.max(10, (absCoeff / Math.max(1, val.norm())) * 100));
 
                 return (
-                  <div key={basisToKey(term.basis)} className="flex items-center gap-3 text-xs font-mono">
+                  <div key={`spec-${basisToKey(term.basis)}-${idx}`} className="flex items-center gap-3 text-xs font-mono">
                     <span className="w-12 font-bold text-teal-600 dark:text-teal-400 text-right">{bStr}</span>
                     <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-4 rounded-full overflow-hidden p-0.5">
                       <div

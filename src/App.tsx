@@ -5,6 +5,10 @@ import CayleyVisualizer from "./components/CayleyVisualizer";
 import CayleyNodeEditor from "./components/CayleyNodeEditor";
 import MathExplainer from "./components/MathExplainer";
 import ZeroDivisorDemo from "./components/ZeroDivisorDemo";
+import ComputationHistory from "./components/ComputationHistory";
+import Cayley3DPlotter from "./components/Cayley3DPlotter";
+import CayleyFractalGenerator from "./components/CayleyFractalGenerator";
+import { HistoryItem } from "./types";
 import {
   serializeCayleyNumber,
   generateCayleyReport,
@@ -34,7 +38,10 @@ import {
   Check,
   ShieldAlert,
   Code,
-  Layers
+  Layers,
+  Clock,
+  Box,
+  Maximize2
 } from "lucide-react";
 
 export default function App() {
@@ -50,8 +57,8 @@ export default function App() {
   const [selectedTermKeyA, setSelectedTermKeyA] = useState<string | null>(null);
   const [selectedTermKeyB, setSelectedTermKeyB] = useState<string | null>(null);
 
-  // Active Register View Tab ("A", "B", or "ZeroDivisor")
-  const [activeTab, setActiveTab] = useState<"A" | "B" | "ZeroDivisor">("A");
+  // Active Register View Tab ("A", "B", "3DPlot", "Fractal", "History", "ZeroDivisor")
+  const [activeTab, setActiveTab] = useState<"A" | "B" | "3DPlot" | "Fractal" | "History" | "ZeroDivisor">("A");
 
   // Calculator Result state
   const [activeOp, setActiveOp] = useState<string>("");
@@ -60,6 +67,39 @@ export default function App() {
 
   // Detailed equation string
   const [equationString, setEquationString] = useState<string>("");
+
+  // Computation History state
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("cayley_calc_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("cayley_calc_history", JSON.stringify(history));
+    } catch (e) {
+      console.warn("Unable to save history to localStorage", e);
+    }
+  }, [history]);
+
+  // Helper to append a calculation to history
+  const logToHistory = (op: string, eq: string, res: CayleyNumber | number) => {
+    const newItem: HistoryItem = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      op,
+      equation: eq,
+      exprA: inputStringA,
+      exprB: inputStringB,
+      resultString: typeof res === "number" ? `${res}` : res.toString(),
+    };
+
+    setHistory((prev) => [newItem, ...prev.slice(0, 49)]); // Keep last 50
+  };
 
   // Theme selection state & Clipboard Copied status
   const [theme, setTheme] = useState<string>(() => localStorage.getItem("rcomplex-theme") || "slate");
@@ -165,7 +205,9 @@ export default function App() {
 
       setCalcResult(res);
       const resDisp = typeof res === "number" ? `${res}` : res.toString();
-      setEquationString(`[A] ${symbol} [B] ➔ ${resDisp}`);
+      const eqStr = `[A] ${symbol} [B] ➔ ${resDisp}`;
+      setEquationString(eqStr);
+      logToHistory(opCode, eqStr, res);
     } catch (err: any) {
       setCalcError(err.message || "Calculation failed.");
       setCalcResult(null);
@@ -207,7 +249,9 @@ export default function App() {
 
       setCalcResult(res);
       const resDisp = typeof res === "number" ? `${res}` : res.toString();
-      setEquationString(`${opCode.toUpperCase()}([A]) ➔ ${resDisp}`);
+      const eqStr = `${opCode.toUpperCase()}([A]) ➔ ${resDisp}`;
+      setEquationString(eqStr);
+      logToHistory(opCode, eqStr, res);
     } catch (err: any) {
       setCalcError(err.message || "Unary evaluation error.");
       setCalcResult(null);
@@ -547,12 +591,12 @@ export default function App() {
           </section>
         )}
 
-        {/* View Selection Tabs (Register A Inspector, Register B Inspector, Zero Divisor Demo) */}
+        {/* View Selection Tabs */}
         <section className="space-y-4">
-          <div className="flex border-b border-slate-200 dark:border-slate-800">
+          <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-thin">
             <button
               onClick={() => setActiveTab("A")}
-              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === "A"
                   ? "border-teal-500 text-teal-600 dark:text-teal-400"
                   : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -562,7 +606,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setActiveTab("B")}
-              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === "B"
                   ? "border-amber-500 text-amber-600 dark:text-amber-400"
                   : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -571,8 +615,41 @@ export default function App() {
               Register B Inspector
             </button>
             <button
+              onClick={() => setActiveTab("3DPlot")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "3DPlot"
+                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                  : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              3D Graphic Plotter
+            </button>
+            <button
+              onClick={() => setActiveTab("Fractal")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "Fractal"
+                  ? "border-teal-500 text-teal-600 dark:text-teal-400"
+                  : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Hypercomplex Fractals
+            </button>
+            <button
+              onClick={() => setActiveTab("History")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === "History"
+                  ? "border-teal-500 text-teal-600 dark:text-teal-400"
+                  : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Computation Log ({history.length})
+            </button>
+            <button
               onClick={() => setActiveTab("ZeroDivisor")}
-              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition border-b-2 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                 activeTab === "ZeroDivisor"
                   ? "border-amber-500 text-amber-600 dark:text-amber-400"
                   : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -591,6 +668,30 @@ export default function App() {
                 setInputStringB(exprB);
                 setActiveTab("A");
                 setEquationString("Loaded Zero Divisor Pair into Registers A & B");
+              }}
+            />
+          ) : activeTab === "3DPlot" ? (
+            <Cayley3DPlotter valA={valA} valB={valB} resultVal={calcResult} />
+          ) : activeTab === "Fractal" ? (
+            <CayleyFractalGenerator
+              valB={valB}
+              onSendToRegisterA={(expr) => {
+                setInputStringA(expr);
+                setActiveTab("A");
+              }}
+            />
+          ) : activeTab === "History" ? (
+            <ComputationHistory
+              history={history}
+              onReload={(exprA, exprB) => {
+                setInputStringA(exprA);
+                setInputStringB(exprB);
+                setActiveTab("A");
+                setEquationString("Reloaded historical expression into Registers A & B");
+              }}
+              onClear={() => setHistory([])}
+              onExport={() => {
+                downloadJsonFile(history, "cayley-computation-history.json");
               }}
             />
           ) : (
