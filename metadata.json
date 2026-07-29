@@ -1,0 +1,8 @@
+{
+  "name": "Randomly Recursive Cayley Number Calculator",
+  "description": "An advanced hypercomplex calculator for randomly recursive free-range Cayley Numbers across arbitrary dimensions, featuring sparse term optimization, Cayley-Dickson multiplication proofs, and interactive zero divisor demos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
